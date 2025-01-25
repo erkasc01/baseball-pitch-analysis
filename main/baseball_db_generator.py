@@ -9,6 +9,7 @@ This file contains the necessary classes to populate the baseball db
 
 So far inside the db there is a pitcher table and a pitch table
 """
+db = SessionLocal()
 # Function to parse out pitcher names and IDs from main page
 def populate_pitchers_table(base_url: str):
     db = SessionLocal()
@@ -126,7 +127,7 @@ class GameUrlProcessor:
             response = requests.get(game_info["game_url"])
             html_page = SoupFactory([response]).convert_to_soup()
             trs = html_page[0].find_all("tr")[1:-1]
-            trs.reverse()
+            reversed(trs)
             pitcher_id_int = int(game_info["player_id"])
             game_id_int = int(game_info["game_id"])
             pitch_data = []
