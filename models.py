@@ -11,10 +11,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 class Pitch(Base):
     __tablename__ = "pitches"
     id = Column(Integer, primary_key=True)
+    pitch_type = Column(String)
     pitcher_id = Column(Integer)
     game_id = Column(Integer)
     pitch_number = Column(Integer)
-    pitch_type = Column(String)
     pitch_result = Column(String)
     pa_result = Column(String)
     spin_rate = Column(Integer)
