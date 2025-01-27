@@ -5,25 +5,47 @@ import copy
 
 class MarkovChain:
     # to do, convert sequence input to list of ints
-    def __init__(self, sequence: list[str]):
+    def __init__(self, sequence):
         self.sequence = sequence
-        self.states = [state for state in set(sequence)]
+        self.states = self.get_states()
         self.sequence_length = len(sequence)
         self.transition_counts = self.generate_counts()
         self.transition_probabilities = self.generate_probabilities()
-        
+    def get_states(self):
+        if isinstance(self.sequence, list):
+            states = [state for state in set(sequence)]
+        elif isinstance(self.sequence, defaultdict):
+            states = set.union(*[set(x) for x in self.sequence.values()])
+            states = [x for x in states]
+        return states
     def generate_counts(self):
-        states = set(self.sequence)
-        state_dict = defaultdict(lambda: defaultdict(int))
-        for state1 in states:
-            for state2 in states:
-                state_dict[state1][state2] = 0
-        old_pitch = self.sequence[0]
-        
-        for i in range(1,len(self.sequence)):
-            new_pitch = self.sequence[i]
-            state_dict[old_pitch][new_pitch] += 1
-            old_pitch = new_pitch
+        states = self.states
+        # Logic for single input list
+        if isinstance(self.sequence, list):
+            
+            state_dict = defaultdict(lambda: defaultdict(int))
+            for state1 in states:
+                for state2 in states:
+                    state_dict[state1][state2] = 0
+            old_state = self.sequence[0]
+            
+            for i in range(1,len(self.sequence)):
+                new_state = self.sequence[i]
+                state_dict[old_state][new_state] += 1
+                old_state = new_state
+        # Logic for multiple input lists (multiple games)
+        if isinstance(self.sequence, defaultdict):
+            state_dict = defaultdict(lambda: defaultdict(int))
+            for state1 in states:
+                for state2 in states:
+                    state_dict[state1][state2] = 0
+            for game in self.sequence:
+                old_state = self.sequence[game][0]
+                for i in range(1, len(self.sequence[game])):
+                    new_state = self.sequence[game][i]
+                    state_dict[old_state][new_state] += 1
+                    old_state = new_state
+            
         return state_dict
         
     def generate_probabilities(self):
