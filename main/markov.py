@@ -11,6 +11,7 @@ class MarkovChain:
         self.sequence_length = len(sequence)
         self.transition_counts = self.generate_counts()
         self.transition_probabilities = self.generate_probabilities()
+
     def get_states(self):
         if isinstance(self.sequence, list):
             states = [state for state in set(sequence)]
@@ -18,6 +19,14 @@ class MarkovChain:
             states = set.union(*[set(x) for x in self.sequence.values()])
             states = [x for x in states]
         return states
+
+    def get_input_length(self):
+        if isinstance(self.sequence, list):
+            length = len(self.sequence)
+        elif isinstance(self.sequence, defaultdict):
+            length = [len(self.sequence[entry]) for entry in self.sequence]
+        return length
+            
     def generate_counts(self):
         states = self.states
         # Logic for single input list
@@ -48,6 +57,17 @@ class MarkovChain:
             
         return state_dict
         
+    def most_common_pitch(self):
+        if isinstance(self.sequence, list):
+            pitches = self.sequence
+            
+        if isinstance(self.sequence, defaultdict):
+            pitches = []
+            for game in self.sequence:
+                pitches += self.sequence[game]
+                
+        return max(pitches, key=pitches.count)
+        
     def generate_probabilities(self):
         transition_probabilities = copy.deepcopy(self.transition_counts)
         
@@ -65,5 +85,6 @@ class MarkovChain:
                 if self.transition_probabilities[state1][state2] != 0:
                     transitions.append({"trigger": str(round(self.transition_probabilities[state1][state2],3)), "source": state1, "dest": state2})
         
-        pitch_machine = GraphMachine(states=self.states, transitions=transitions, initial=self.sequence[0])
+        pitch_machine = GraphMachine(states=self.states, transitions=transitions, initial=self.most_common_pitch())
+        
         return pitch_machine
