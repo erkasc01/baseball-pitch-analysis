@@ -32,7 +32,10 @@ def populate_pitchers_table(base_url: str):
             pitcher_name = str(entry).split(">\n")[1].split(" <")[0].split(",")
             stripped_name = [x.strip() for x in pitcher_name]
             pitcher_name_str = f"{stripped_name[1]} {stripped_name[0]}"
-            print(f"Adding pitcher {pitcher_name_str} with id {pitcher_id_int} to db")
+            print((
+                f"Adding pitcher {pitcher_name_str} with id "
+                f"{pitcher_id_int} to db"
+            ))
             new_pitcher = Pitcher(
                                 pitcher_name=pitcher_name_str,
                                 pitcher_id=pitcher_id_int
@@ -62,7 +65,10 @@ class SoupFactory:
                 if req.status_code == 200:
                     valid_requests.append(req)
             except ValueError:
-                print(f"Warning: No status code found for request {idx} with status code {req.status_code}") 
+                print((
+                    f"Warning: No status code found for request {idx} with"
+                    f" status code {req.status_code}"
+                ))
         return valid_requests
 
     def convert_to_soup(self):
@@ -75,13 +81,16 @@ class SoupFactory:
             except ValueError:
                 print(f"Warn: Cannot parse text for request {idx}")
         if len(souped_requests) == 0:
-            print("Error: No requests could be parsed. Please ensure list of requests is non-empty.")
+            print((
+                "Error: No requests could be parsed. "
+                "Please ensure list of requests is non-empty."
+            ))
             return
         else:
             return souped_requests
 
 
-# This is expecting the main pitch page as an input 
+# This is expecting the main pitch page as an input
 class GameUrlRetriever:
     def __init__(self, base_url):
         self.base_url = base_url
@@ -104,13 +113,32 @@ class GameUrlRetriever:
         game_urls = []
         for entry in pitcher_trs:
             try:
-                player_name_date = str(entry).split("player_name-date_")[1].split("\"")[0]
+                player_name_date = (
+                            str(entry)
+                            .split("player_name-date_")[1]
+                            .split("\"")[0]
+                        )
                 player_name_date = player_name_date.split("_")
-                player_id, date, game_id = player_name_date[0], player_name_date[1], player_name_date[2]
-                game_url = self.base_url + f"&type=details&player_id={player_id}&ep_game_date={date}&ep_game_pk={game_id}"
-                game_urls.append({"game_url": game_url, "player_id": player_id, "game_id": game_id})
+                player_id, date, game_id = (
+                                player_name_date[0],
+                                player_name_date[1],
+                                player_name_date[2]
+                            )
+                game_url = self.base_url + (
+                                f"&type=details&player_id="
+                                f"{player_id}&ep_game_date="
+                                f"{date}&ep_game_pk={game_id}"
+                            )
+                game_urls.append({
+                            "game_url": game_url,
+                            "player_id": player_id,
+                            "game_id": game_id
+                        })
             except ValueError:
-                print("Warn: failed to parse player, date, and game information from entry")
+                print((
+                    "Warn: failed to parse player, date, and game"
+                    " information from entry"
+                ))
         return game_urls
 
 
@@ -121,7 +149,11 @@ class GameUrlProcessor:
 
     def process_urls(self):
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = {executor.submit(self.fetch_url_and_extract_pitch, game): game for game in self.game_list}              
+            futures = {
+                executor.submit(
+                    self.fetch_url_and_extract_pitch,
+                    game): game for game in self.game_list
+                }
         for future in futures:
             for entry in future.result():
                 if type(entry) is Pitch:
@@ -140,14 +172,19 @@ class GameUrlProcessor:
             trs.reverse()
             pitcher_id_int = int(game_info["player_id"])
             game_id_int = int(game_info["game_id"])
-            results = []   
+            results = []
             for idx, tr in enumerate(trs):
                 pitch_data = []
                 for elem in tr:
                     inner_text = elem.text.strip()
                     if inner_text != "":
                         pitch_data.append(inner_text)
-                new_pitch = self.parse_pitch_info(pitch_data, pitcher_id_int, game_id_int, idx)
+                new_pitch = self.parse_pitch_info(
+                                            pitch_data,
+                                            pitcher_id_int,
+                                            game_id_int,
+                                            idx
+                                        )
                 results.append(new_pitch)
             return results
 
@@ -169,7 +206,7 @@ class GameUrlProcessor:
                 spin_rate_int = 0
 
             new_pitch = Pitch(
-                    pitcher_id=pitcher_id_int, 
+                    pitcher_id=pitcher_id_int,
                     game_id=game_id_int,
                     pitch_number=pitch_number_int,
                     pitch_type=pitch_type_str,
