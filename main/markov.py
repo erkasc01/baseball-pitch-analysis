@@ -1,23 +1,29 @@
-from transitions import Machine
 from transitions.extensions import GraphMachine
 from collections import defaultdict
 import copy
 
+
 class MarkovChain:
-    # to do, convert sequence input to list of ints
+    # To do, convert sequence input to list of ints
     def __init__(self, sequence):
+        if not sequence:
+            raise ValueError("ERROR: Input cannot be empty.")
         self.sequence = sequence
         self.states = self.get_states()
-        self.sequence_length = len(sequence)
+        self.sequence_length = self.get_input_length()
         self.transition_counts = self.generate_counts()
         self.transition_probabilities = self.generate_probabilities()
 
     def get_states(self):
         if isinstance(self.sequence, list):
-            states = [state for state in set(sequence)]
+            states = [
+                    state
+                    for state in set(self.sequence)
+                    if state not in ["CS", "PO"]
+                ]
         elif isinstance(self.sequence, defaultdict):
             states = set.union(*[set(x) for x in self.sequence.values()])
-            states = [x for x in states]
+            states = [x for x in states if x not in ["CS", "PO"]]
         return states
 
     def get_input_length(self):
@@ -26,19 +32,19 @@ class MarkovChain:
         elif isinstance(self.sequence, defaultdict):
             length = [len(self.sequence[entry]) for entry in self.sequence]
         return length
-            
+
     def generate_counts(self):
         states = self.states
         # Logic for single input list
         if isinstance(self.sequence, list):
-            
+
             state_dict = defaultdict(lambda: defaultdict(int))
             for state1 in states:
                 for state2 in states:
                     state_dict[state1][state2] = 0
             old_state = self.sequence[0]
-            
-            for i in range(1,len(self.sequence)):
+
+            for i in range(1, len(self.sequence)):
                 new_state = self.sequence[i]
                 state_dict[old_state][new_state] += 1
                 old_state = new_state
@@ -49,33 +55,51 @@ class MarkovChain:
                 for state2 in states:
                     state_dict[state1][state2] = 0
             for game in self.sequence:
+                game_length = len(self.sequence[game])
                 old_state = self.sequence[game][0]
-                for i in range(1, len(self.sequence[game])):
+                for i in range(1, game_length):
                     new_state = self.sequence[game][i]
+                    # Misclassified balls are sometimes labeled "CS" or "PO"
+                    # We will ignore these. First check if it is the
+                    # last element in the game array
+                    if new_state in ["CS", "PO"] and i == game_length-1:
+                        continue
+                    elif new_state in ["CS", "PO"] and i != game_length-1:
+                        old_state = self.sequence[game][i+1]
+                        i += 1
+                        continue
                     state_dict[old_state][new_state] += 1
                     old_state = new_state
-            
+
         return state_dict
-        
+
+    def generate_probabilities(self):
+        transition_probabilities = copy.deepcopy(self.transition_counts)
+        for state1 in transition_probabilities:
+            total_count = sum([
+                            x
+                            for x in transition_probabilities[state1].values()
+                        ])
+            for state2 in transition_probabilities:
+                try:
+                    transition_probabilities[state1][state2] /= total_count
+                # If we end on a pitch that is the only instance of its
+                # kind in the game, then there is a division error, so
+                # we set the transition probability to 0
+                except ZeroDivisionError:
+                    transition_probabilities[state1][state2] = 0
+        return transition_probabilities
+
     def most_common_pitch(self):
         if isinstance(self.sequence, list):
             pitches = self.sequence
-            
+
         if isinstance(self.sequence, defaultdict):
             pitches = []
             for game in self.sequence:
                 pitches += self.sequence[game]
-                
+
         return max(pitches, key=pitches.count)
-        
-    def generate_probabilities(self):
-        transition_probabilities = copy.deepcopy(self.transition_counts)
-        
-        for state1 in transition_probabilities:
-            total_count = sum([x for x in transition_probabilities[state1].values()])
-            for state2 in transition_probabilities:
-                transition_probabilities[state1][state2] /= total_count
-        return transition_probabilities
 
     def generate_state_machine(self):
 
@@ -83,8 +107,21 @@ class MarkovChain:
         for state1 in self.states:
             for state2 in self.states:
                 if self.transition_probabilities[state1][state2] != 0:
-                    transitions.append({"trigger": str(round(self.transition_probabilities[state1][state2],3)), "source": state1, "dest": state2})
-        
-        pitch_machine = GraphMachine(states=self.states, transitions=transitions, initial=self.most_common_pitch())
-        
+                    probability = round(
+                                self.transition_probabilities[state1][state2],
+                                3
+                            )
+                    text = str(probability)
+                    transitions.append({
+                                    "trigger": text,
+                                    "source": state1,
+                                    "dest": state2
+                                })
+
+        pitch_machine = GraphMachine(
+                            states=self.states,
+                            transitions=transitions,
+                            initial=self.most_common_pitch()
+                        )
+
         return pitch_machine
