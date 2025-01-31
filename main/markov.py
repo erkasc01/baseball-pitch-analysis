@@ -1,6 +1,7 @@
-from transitions.extensions import GraphMachine
 from collections import defaultdict
-import copy
+from copy import deepcopy
+from os.path import exists
+from transitions.extensions import GraphMachine
 
 
 class MarkovChain:
@@ -13,6 +14,7 @@ class MarkovChain:
         self.sequence_length = self.get_input_length()
         self.transition_counts = self.generate_counts()
         self.transition_probabilities = self.generate_probabilities()
+        self.state_machine = self.generate_state_machine()
 
     def get_states(self):
         if isinstance(self.sequence, list):
@@ -74,7 +76,7 @@ class MarkovChain:
         return state_dict
 
     def generate_probabilities(self):
-        transition_probabilities = copy.deepcopy(self.transition_counts)
+        transition_probabilities = deepcopy(self.transition_counts)
         for state1 in transition_probabilities:
             total_count = sum([
                             x
@@ -125,3 +127,12 @@ class MarkovChain:
                         )
 
         return pitch_machine
+
+    def save_state_diagram(self, pitcher_name):
+        if self.state_machine:
+            fname = (
+                f"../diagrams/{pitcher_name.replace(" ", "_")}"
+                "_state_machine.jpg"
+            )
+            if not exists(fname):
+                self.state_machine._get_graph().draw(fname, prog="dot")
