@@ -13,7 +13,7 @@ class PitcherQuery:
         query = (
             session.query(Pitch)
             .join(Pitcher, Pitch.pitcher_id == Pitcher.pitcher_id)
-            .filter(Pitcher.pitcher_name == self.pitcher_name)
+            .filter(Pitcher.pitcher_name.ilike(self.pitcher_name))
             .order_by(Pitch.game_id.desc(), Pitch.pitch_number.asc())
         )
         pitch_dic = defaultdict(list[str])
