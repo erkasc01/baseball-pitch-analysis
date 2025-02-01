@@ -7,18 +7,30 @@ class PitcherQuery:
     def __init__(self, pitcherName):
         self.pitcher_name = pitcherName
         self.query_results = self.query_for_pitches()
+        self.pitcher_name_normalized = self.get_pitcher_name_normalized()
 
     def query_for_pitches(self) -> defaultdict:
         session = SessionLocal()
-        query = (
+        pitch_query = (
             session.query(Pitch)
             .join(Pitcher, Pitch.pitcher_id == Pitcher.pitcher_id)
             .filter(Pitcher.pitcher_name_normalized.ilike(self.pitcher_name))
             .order_by(Pitch.game_id.desc(), Pitch.pitch_number.asc())
         )
         pitch_dic = defaultdict(list[str])
-        for entry in query:
+        for entry in pitch_query:
             pitch_dic[str(entry.game_id)].append(entry.pitch_type)
 
         session.close()
         return pitch_dic
+
+    def get_pitcher_name_normalized(self):
+        session = SessionLocal()
+        pitcher_query = (
+            session.query(Pitcher)
+            .filter(Pitcher.pitcher_name_normalized.ilike(self.pitcher_name))
+        )
+        for entry in pitcher_query:
+            normalized_name = entry.pitcher_name_normalized
+
+        return normalized_name
