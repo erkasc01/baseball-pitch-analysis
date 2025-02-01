@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.8.4"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <title>Get Pitcher Finite State Machine!</title>
+</head>
+<body>
+
+    <form hx-get="/get-fsm" hx-target="#pitch-fsm-result" method="GET" hx-swap="innerHTML" hx-trigger="click">
+        <label for="pitcher-name-input"> Pitcher name: </label>
+        <input type="text" id="pitcher-name-input" name="pitcher-name" required>
+        <button type="submit">Submit</button>
+
+    </form>
+    <div id="pitch-fsm-result"></div>
+
+
+
+</body>
+</html>

@@ -131,18 +131,18 @@ class MarkovChain:
     def save_state_diagram(self, pitcher_name):
         if self.state_machine:
             fpath = (
-                f"../diagrams/{pitcher_name.replace(" ", "_")}"
+                f"static/diagrams/{pitcher_name.replace(" ", "_")}"
                 "_state_machine.jpg"
             )
             if not exists(fpath):
                 print((
                     f"INFO: State machine diagram for {pitcher_name} does not"
-                    " exist. Creating {fpath}."
+                    f" exist. Creating {fpath}."
                 ))
-                self.state_machine._get_graph().draw(fpath, prog="dot")
+                self.state_machine.get_graph().draw(fpath, prog="dot")
             elif exists(fpath):
                 print((
                     f"INFO: State machine diagram for {pitcher_name} exists."
-                    " returning {fpath}."
+                    f" returning {fpath}."
                 ))
             return fpath
