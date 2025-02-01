@@ -3,12 +3,33 @@ import requests
 from main.models import Pitch, Pitcher, SessionLocal
 import concurrent.futures
 import time
+from unicodedata import normalize, combining
+
 """
 This file contains the necessary classes to populate the baseball db
 
 So far inside the db there is a pitcher table and a pitch table
 """
-db = SessionLocal()
+
+
+def unaccent(name_query):
+    return (
+            "".join(
+                    c for c in normalize("NFKD", name_query)
+                    if not combining(c)
+                )
+        )
+
+
+def add_normalized_names():
+    session = SessionLocal()
+    query = session.query(Pitcher).all()
+    for pitcher in query:
+        normalized_name = unaccent(pitcher.pitcher_name.lower())
+        pitcher.pitcher_name_normalized = normalized_name
+    session.commit()
+    session.close()
+    print("INFO: Pitcher names normalized and db session closed.")
 
 
 # Function to parse out pitcher names and IDs from main page
@@ -148,6 +169,7 @@ class GameUrlProcessor:
         self.game_list = game_dic_list
 
     def process_urls(self):
+        db = SessionLocal()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {
                 executor.submit(
@@ -161,6 +183,7 @@ class GameUrlProcessor:
                     db.add(new_pitch)
 
         db.commit()
+        db.close()
         return futures
 
     def fetch_url_and_extract_pitch(self, game_info):
