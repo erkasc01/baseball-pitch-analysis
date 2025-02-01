@@ -1,5 +1,5 @@
-from main.models import SessionLocal, Pitch, Pitcher
 from collections import defaultdict
+from main.models import SessionLocal, Pitch, Pitcher
 
 
 # Class takes in pitcher name then returns dic of game pitch type lists
@@ -13,7 +13,7 @@ class PitcherQuery:
         query = (
             session.query(Pitch)
             .join(Pitcher, Pitch.pitcher_id == Pitcher.pitcher_id)
-            .filter(Pitcher.pitcher_name.ilike(self.pitcher_name))
+            .filter(Pitcher.pitcher_name_normalized.ilike(self.pitcher_name))
             .order_by(Pitch.game_id.desc(), Pitch.pitch_number.asc())
         )
         pitch_dic = defaultdict(list[str])
