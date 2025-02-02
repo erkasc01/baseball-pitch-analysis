@@ -104,7 +104,6 @@ class MarkovChain:
         return max(pitches, key=pitches.count)
 
     def generate_state_machine(self):
-
         transitions = []
         for state1 in self.states:
             for state2 in self.states:
@@ -119,19 +118,19 @@ class MarkovChain:
                                     "source": state1,
                                     "dest": state2
                                 })
+        return transitions
 
-        pitch_machine = GraphMachine(
+    def save_state_diagram(self, normalized_name, pitcher_name):
+        if self.state_machine:
+            pitch_machine = GraphMachine(
                             states=self.states,
-                            transitions=transitions,
-                            initial=self.most_common_pitch()
+                            transitions=self.state_machine,
+                            initial=self.most_common_pitch(),
+                            title=f"{pitcher_name} Pitch State Machine"
                         )
 
-        return pitch_machine
-
-    def save_state_diagram(self, pitcher_name):
-        if self.state_machine:
             fpath = (
-                f"static/diagrams/{pitcher_name.replace(" ", "_")}"
+                f"static/diagrams/{normalized_name.replace(" ", "_")}"
                 "_state_machine.jpg"
             )
             if not exists(fpath):
@@ -139,7 +138,7 @@ class MarkovChain:
                     f"INFO: State machine diagram for {pitcher_name} does not"
                     f" exist. Creating {fpath}."
                 ))
-                self.state_machine.get_graph().draw(fpath, prog="dot")
+                pitch_machine.get_graph().draw(fpath, prog="dot")
             elif exists(fpath):
                 print((
                     f"INFO: State machine diagram for {pitcher_name} exists."
